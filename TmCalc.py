@@ -1,4 +1,4 @@
-#!/nmr/programs/python/bin/python2.6
+#!/Library/Frameworks/Python.framework/Versions/2.7/bin/python
 """
 TmCalc.py -s <primer sequence> [-m <mismatch sequence>]
 calculates the melting temperature of a primer, based on its length, GC
@@ -113,6 +113,10 @@ def main():
     dna = Seq(ATGCsequence)
     print "Sequence: ", dna
     print "Reverse Complement: ", dna.reverse_complement()
+    synthfw=str(dna).replace('A','5').replace('C','6').replace('G','7').replace('T','8')
+    synthrev=str(dna.reverse_complement()).replace('A','5').replace('C','6').replace('G','7').replace('T','8')
+    print "Synthesizer-fw: ",synthfw
+    print "Synthesizer-rev: ",synthrev
 
 
 # Execute everything
