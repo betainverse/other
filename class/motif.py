@@ -8,6 +8,7 @@ Given: non-motif sequences have C->G transition of 0.08
 motif sequences have A->T transition of 0.7 and T->G of 0.9
 """
 from operator import mul
+import pylab
 
 # Transition probabilities, ignoring begin and end
 
@@ -68,24 +69,22 @@ def calc_subsequence_motif(seq,n):
     ratios = {}
     for i in range(len(seq)-n+1):
         subsequence = seq[i:i+n]
-        ratio = motif_likelihood_ratio(subsequence)
-        ratios[i] = (ratio,subsequence)
+        ratios[i] = motif_likelihood_ratio(subsequence)
     return ratios
 
-# Given a dictionary of subsequences and their likelihood ratios, select
+# Given a dictionary of likelihood ratios, select
 # the subsequence with the highest likelihood of being a motif. Return
 # the index of that subsequence, along with the likelihood and the sub-
 # sequence itself.
 
 def get_best_motif(ratio_dict):
     max_likelihood = 0
-    best_subsequence = ''
     best_index = 0
     for key in ratio_dict.keys():
-        if ratio_dict[key][0]>max_likelihood:
-            max_likelihood,best_subsequence = ratio_dict[key]
+        if ratio_dict[key]>max_likelihood:
+            max_likelihood = ratio_dict[key]
             best_index = key
-    return key,max_likelihood,best_subsequence
+    return key,max_likelihood
 
 # Determine whether two motifs overlap, given their indices and length.
 # Return true if they are separate, and do not overlap; false otherwise.
@@ -115,21 +114,27 @@ def is_unique(index1,indices,length):
 # to be adjacent without any intervening sequence, although this doesn't
 # really make sense. 
 
-def cull_motifs(ratio_dict):
-    motif_length = len(ratio_dict[0][1])
+def cull_motifs(ratio_dict,motif_length):
     top10 = {}
-    remaining = ratio_dict
-    while len(top10.keys())<10:
-        next_best = get_best_motif(remaining)
-        index = next_best[0]
-        if is_unique(index,top10.keys(),motif_length):
-            top10[index]=(next_best[1],next_best[2])
-        del remaining[index]
+    for i in range(10):
+        max_likelihood = 0
+        best_index = 0
+        for key in ratio_dict.keys():
+            if ratio_dict[key]>max_likelihood:
+                dist_from_others = [abs(key-akey) for akey in top10.keys()]
+                unique = True
+                for dist in dist_from_others:
+                    if dist < motif_length:
+                        unique = False
+                if unique:
+                    max_likelihood = ratio_dict[key]
+                    best_index = key
+        top10[best_index] = max_likelihood
     return top10
 
-def print_results_a(most_likely_motifs):
+def print_results_a(most_likely_motifs,seq,length):
     for position in most_likely_motifs.keys():
-        print position, most_likely_motifs[position]
+        print position, most_likely_motifs[position],seq[position:position+length]
 
 def get_sequence(filepath):
     openfile = open(filepath,'r')
@@ -137,17 +142,36 @@ def get_sequence(filepath):
     openfile.close()
     return seq
 
+def plot_ratios(ratio_dict):
+    xlist = ratio_dict.keys()
+    ylist = [ratio_dict[key] for key in ratio_dict.keys()]
+    fig=pylab.figure()
+    pylab.scatter(xlist,ylist,marker='o',s=5)
+    pylab.xlabel("sequence index")
+    pylab.ylabel("odds ratio")
+    axes = fig.gca()
+    axes.set_yscale('log')
+#    axes.set_aspect('equal')
+    pylab.xlim(min(xlist),max(xlist))
+    pylab.ylim(min(ylist),max(ylist))
+    pylab.savefig('motifs.pdf')
+
 def main():
     
     global Tr_bg
     global Tr_mot
     #print "list_product([1,2,3,4,5]) =",list_product([1,2,3,4,5])
     #print "Pr(AAAA) =", calc_prob('AAAA',Tr_bg)
+    #subseq = 'ATGGCTGGTGTGCATGATGTGATGATGCTGAATGCCATGCGCCTGTGTGT'
+    #print motif_likelihood_ratio('ATGGCTGGTGTGCATGATGTGATGATGCTGAATGCCATGCGCCTGTGTGT')
     #print "likelihood(AAAA) =", motif_likelihood_ratio('AAAA')
     #print "likelihood(ATAT) =", motif_likelihood_ratio('ATAT')
     #print "likelihood ratios for AATGCCTGTGCCGTAAAGTCCA:"
     #print calc_subsequence_motif('AATGCCTGTGCCGTAAAGTCCA',10)
     #print get_sequence('new_seq_1.txt')[-20:]
-    print_results_a(cull_motifs(calc_subsequence_motif(get_sequence('new_seq_1.txt'),50)))
+    seq = get_sequence('new_seq_1.txt')
+    print_results_a(cull_motifs(calc_subsequence_motif(seq,50),50),seq,50)
+    #print cull_motifs(calc_subsequence_motif(get_sequence('new_seq_1.txt'),50),50)
+    #plot_ratios(calc_subsequence_motif(get_sequence('new_seq_1.txt'),50))
     
 main()
