@@ -133,6 +133,7 @@ def cull_motifs(ratio_dict,motif_length):
     return top10
 
 def print_results_a(most_likely_motifs,seq,length):
+    print 'position, odds-ratio, sequence'
     for position in most_likely_motifs.keys():
         print position, most_likely_motifs[position],seq[position:position+length]
 
@@ -158,20 +159,20 @@ def plot_ratios(ratio_dict):
 
 def main():
     
-    global Tr_bg
-    global Tr_mot
-    #print "list_product([1,2,3,4,5]) =",list_product([1,2,3,4,5])
-    #print "Pr(AAAA) =", calc_prob('AAAA',Tr_bg)
-    #subseq = 'ATGGCTGGTGTGCATGATGTGATGATGCTGAATGCCATGCGCCTGTGTGT'
-    #print motif_likelihood_ratio('ATGGCTGGTGTGCATGATGTGATGATGCTGAATGCCATGCGCCTGTGTGT')
-    #print "likelihood(AAAA) =", motif_likelihood_ratio('AAAA')
-    #print "likelihood(ATAT) =", motif_likelihood_ratio('ATAT')
-    #print "likelihood ratios for AATGCCTGTGCCGTAAAGTCCA:"
-    #print calc_subsequence_motif('AATGCCTGTGCCGTAAAGTCCA',10)
-    #print get_sequence('new_seq_1.txt')[-20:]
-    seq = get_sequence('new_seq_1.txt')
-    print_results_a(cull_motifs(calc_subsequence_motif(seq,50),50),seq,50)
-    #print cull_motifs(calc_subsequence_motif(get_sequence('new_seq_1.txt'),50),50)
-    #plot_ratios(calc_subsequence_motif(get_sequence('new_seq_1.txt'),50))
+    seq1 = get_sequence('new_seq_1.txt')
+    print_results_a(cull_motifs(calc_subsequence_motif(seq1,50),50),seq1,50)
     
 main()
+
+## A.
+## position odds-ratio sequence
+## 3456 504.225709279 GCCCAATTGCTGCATGGACTGAGTGGATGGGCTGCTGGAGGCGGCTTGAA
+## 4802 1012992992.82 ATGACTGTGGGTGAGCATGCGAACTGATGCGCTGATGCGTGGATGTGTGG
+## 2598 909428.098185 AATGATGCTGATGATTGAATGGACTGCTGGATGGCCGGCTGTTGGGAATC
+## 1230 966470351.665 GCGAGGTGGCGTGATGATGCGTGTGTGGTGTATGCATCCATGATGTGTGT
+## 2292 709229.848643 GGCTGTGCCAGTATGCTGGATGGCGGTGATTGTGCATCTGTGTGGATGAG
+## 1166 15901044262.0 TGATGTGCTGTGGCTGCTGTGCATGTGATGCCCGGCCGTGCGCCGCATGC
+## 502 2029044.5922 TGCCTGAGTGATGATGACTGTGTGTGGGCCAGTGCACCGATGTGGACCGG
+## 3801 122388403.011 TGGTGAATCTGCCATGGGATGCGTGCCCTGATGATGATCTGTGGATGTGT
+## 4635 100040720.328 CTGTGATGCATGCTGGGACCGTGTGTGTGCCTGTGCTTGGATGCCATGCT
+## 60 89221145795.4 ATGGCTGGTGTGCATGATGTGATGATGCTGAATGCCATGCGCCTGTGTGT
