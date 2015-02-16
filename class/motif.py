@@ -9,6 +9,7 @@ motif sequences have A->T transition of 0.7 and T->G of 0.9
 """
 from operator import mul
 import pylab
+from math import log
 
 # Transition probabilities, ignoring begin and end
 
@@ -41,26 +42,7 @@ def calc_prob(seq,tr):
 def motif_likelihood_ratio(seq):
     global Tr_mot
     global Tr_bg
-    return calc_prob(seq,Tr_mot)/calc_prob(seq,Tr_bg)
-
-## # Given a sequence, calculate the likelihood ratio that each subsequence
-## # of length n is a motif or not; return the 10 most likely positions. 
-## # This dictionary seems backwards.
-## # Recall that positions start at 0.
-## def calc_subsequence_motif(seq,n):
-##     best_ratios = {}
-##     for i in range(len(seq)-n+1):
-##         ratio = motif_likelihood_ratio(seq[i:i+n])
-##         if len(best_ratios.values()) < 10:
-##             best_ratios[ratio]=i
-##         elif ratio > max(best_ratios.keys()):
-##             del best_ratios[min(best_ratios.keys())]
-##             best_ratios[ratio]=i
-##         print seq[i:i+n], ratio
-##     most_likely_motifs={}
-##     for position in best_ratios.values():
-##         most_likely_motifs[position] = seq[i:i+n]
-##     return most_likely_motifs
+    return log(calc_prob(seq,Tr_mot)/calc_prob(seq,Tr_bg))
 
 # Given a sequence, calculate the likelihood ratio that each subsequence
 # of length n is a motif or not. Recall that positions start at 0.
@@ -117,8 +99,8 @@ def is_unique(index1,indices,length):
 def cull_motifs(ratio_dict,motif_length):
     top10 = {}
     for i in range(10):
-        max_likelihood = 0
-        best_index = 0
+        max_likelihood = -1
+        best_index = -1
         for key in ratio_dict.keys():
             if ratio_dict[key]>max_likelihood:
                 dist_from_others = [abs(key-akey) for akey in top10.keys()]
@@ -143,25 +125,61 @@ def get_sequence(filepath):
     openfile.close()
     return seq
 
-def plot_ratios(ratio_dict):
+def plot_ratios(ratio_dict,output):
     xlist = ratio_dict.keys()
     ylist = [ratio_dict[key] for key in ratio_dict.keys()]
     fig=pylab.figure()
     pylab.scatter(xlist,ylist,marker='o',s=5)
     pylab.xlabel("sequence index")
-    pylab.ylabel("odds ratio")
+    pylab.ylabel("log odds ratio")
     axes = fig.gca()
-    axes.set_yscale('log')
+    #axes.set_yscale('log')
 #    axes.set_aspect('equal')
     pylab.xlim(min(xlist),max(xlist))
     pylab.ylim(min(ylist),max(ylist))
-    pylab.savefig('motifs.pdf')
+    pylab.savefig(output)
+
+def find_motifs_unknown_length(seq2):
+    odds_ratios = {}
+    for i in range(20,100):
+        odds_ratios[i] = cull_motifs(calc_subsequence_motif(seq2,i),i)
+    max_sum_odds = -1
+    best_motif_length = 0
+    for key in odds_ratios.keys():
+        # maybe would want to use product instead of sum if not using log?
+        odds_sum = sum(odds_ratios[key].values()) 
+        if odds_sum > max_sum_odds:
+            max_sum_odds = odds_sum
+            best_motif_length = key
+    return odds_ratios[best_motif_length],best_motif_length
+    
+    ## xlist = []
+    ## ylist = []
+    ## ## for key in odds_ratios.keys():
+    ## ##     for value in odds_ratios[key].values():
+    ## ##         xlist.append(key)
+    ## ##         ylist.append(value)
+    ## for key in odds_ratios.keys():
+    ##     xlist.append(key)
+    ##     # maybe would want to use product instead of sum if not using log?
+    ##     ylist.append(sum(odds_ratios[key].values())) 
+    ## fig=pylab.figure()
+    ## pylab.scatter(xlist,ylist,marker='o',s=5)
+    ## pylab.xlabel("motif length")
+    ## pylab.ylabel("log odds ratio")
+    ## axes = fig.gca()
+    ## pylab.savefig('motifs_seq_2_sums_45.pdf')
+    
+    return 0
 
 def main():
     
     seq1 = get_sequence('new_seq_1.txt')
+    #plot_ratios(calc_subsequence_motif(seq1,50),'motifs_seq_1.pdf')
     print_results_a(cull_motifs(calc_subsequence_motif(seq1,50),50),seq1,50)
-    
+    seq2 = get_sequence('new_seq_2.txt')
+    motifs,length = find_motifs_unknown_length(seq2)
+    print_results_a(motifs,seq2,length)
 main()
 
 ## A.
@@ -176,3 +194,16 @@ main()
 ## 3801 122388403.011 TGGTGAATCTGCCATGGGATGCGTGCCCTGATGATGATCTGTGGATGTGT
 ## 4635 100040720.328 CTGTGATGCATGCTGGGACCGTGTGTGTGCCTGTGCTTGGATGCCATGCT
 ## 60 89221145795.4 ATGGCTGGTGTGCATGATGTGATGATGCTGAATGCCATGCGCCTGTGTGT
+
+## B
+## position, log-odds-ratio, sequence
+## 3456 16.5068312558 CGGATGATGCGGATGATGGGTGGGGATGAGTGATC
+## 4801 12.3116908788 CGCCCTGGTGCTGTGGCTTGCTGCATGATGATGTC
+## 2599 16.8776663397 GGATGATGTGTCTGCGTGTGGATGATGGTGATGTT
+## 60 3.65303921315 TGGCAGTGTGTCAGGAAATGCTGTGCTCGGATGCC
+## 1163 8.82930717603 TGTGACCAGGGCATGATGATGTCTGAATGATATGC
+## 1232 13.2942963312 TGGCCTGCGTTGGATGATGATGGCCATGCTGCATC
+## 500 18.4211675319 ATGCTGATGTGCTGTGATGTGATGGGTGGCCATGA
+## 3801 11.2589615329 CATCTGCGCCGCTGGCCATGCATGGCCATGATGAC
+## 2298 11.4739879846 CCTGCGGTCGAGATGGGTGCCATGGCGATGTGATT
+## 4636 12.184431124 TGTCTGAATGATGATGTGCTGGCACGCGATGGGGT
